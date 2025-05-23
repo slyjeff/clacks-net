@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Data.Common;
 using System.Text.Json;
 
 namespace SlySoft.ClacksNet;

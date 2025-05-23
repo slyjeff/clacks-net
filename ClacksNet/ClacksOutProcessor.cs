@@ -15,13 +15,13 @@ public interface IClacksOutSender {
     Task<bool> SendMessage(ClacksOutMessage message, CancellationToken cancellationToken = default);    
 }
 
-internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnectionProvider connectionProvider, ILogger<ClacksOutProcessor> logger) : IHostedService, IAsyncDisposable {
+internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnectionProvider connectionProvider, ILogger<ClacksOutProcessor> logger, ClacksOutConfig config) : IHostedService, IAsyncDisposable {
     private CancellationTokenSource? _cancellationTokenSource;
     private CancellationToken _cancellationToken = CancellationToken.None;
     private IClacksOutSender _sender = null!;
     private List<IClacksOutListener> _listeners = [];
     private System.Timers.Timer? _pollingTimer;
-    private readonly TimeSpan _pollingInterval = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan _pollingInterval = config.PollingInterval;
 
     public async Task StartAsync(CancellationToken cancellationToken) {
         var sender = services.GetService<IClacksOutSender>();
