@@ -1,5 +1,6 @@
 using System.Data;
 using Microsoft.Extensions.DependencyInjection;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace SlySoft.ClacksNet;
 
@@ -10,7 +11,7 @@ public class ClacksOutConfig {
 }
 
 public static class Register {
-    public static IServiceCollection AddClacksOut(this IServiceCollection services, Action<ClacksOutConfig> configClacksOut = null) {
+    public static IServiceCollection AddClacksOut(this IServiceCollection services, Action<ClacksOutConfig> configClacksOut) {
         var config = new ClacksOutConfig();
         configClacksOut(config);
         if (config.GetConnection == null) {
