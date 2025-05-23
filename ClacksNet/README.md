@@ -20,8 +20,8 @@ I intend to add a dead letter queue in the future (but would welcome if someone 
 The main package is `SlySoft.Clacks.NET`, which contains the core functionality. If you are using Postgres, you can
 also install the `SlySoft.Clacks.NET.Postgres` package, which contains the Postgres-specific functionality.
 ```bash 
-dotnet add package SlySoft.Clacks.NET
-dotnet add package SlySoft.Clacks.NET.Postgres
+dotnet add package SlySoft.ClacksNet
+dotnet add package SlySoft.ClacksNet.Postgres
 ```
 
 ### Configure the Outbox via dependency injection

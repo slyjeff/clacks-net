@@ -12,6 +12,7 @@
         <Copyright>Copyright (c) 2025 Jeff Sylvester</Copyright>
         <PackageProjectUrl>https://github.com/slyjeff/clacks-net</PackageProjectUrl>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/slyjeff/clacks-net</RepositoryUrl>
         <RepositoryType>GitHub</RepositoryType>
         <PackageTags>.net, outbox</PackageTags>
