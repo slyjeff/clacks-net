@@ -1,7 +1,6 @@
-using ClacksNet.postgres;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace SlySoft.ClacksNet.postgres;
+namespace SlySoft.ClacksNet.Postgres;
 
 public static class Register {
     public static IServiceCollection AddPostgresClacksOutListener(this IServiceCollection services) {

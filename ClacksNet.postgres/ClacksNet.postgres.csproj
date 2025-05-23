@@ -4,8 +4,23 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyName>SlySoft.ClacksNet.postgres</AssemblyName>
-        <RootNamespace>SlySoft.ClacksNet.postgres</RootNamespace>
+        <AssemblyName>SlySoft.ClacksNet.Postgres</AssemblyName>
+        <RootNamespace>SlySoft.ClacksNet.Postgres</RootNamespace>
+        <Version>1.0.0-beta</Version>
+        <Authors>Jeff Sylvester </Authors>
+        <Description>An extension library for Clacks.NET that adds Postgres event monitoring for outbox processing</Description>
+        <Copyright>Copyright (c) 2025 Jeff Sylvester</Copyright>
+        <PackageProjectUrl>https://github.com/slyjeff/clacks-net</PackageProjectUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <RepositoryUrl>https://github.com/slyjeff/clacks-net</RepositoryUrl>
+        <RepositoryType>GitHub</RepositoryType>
+        <PackageTags>.net, outbox, postgres</PackageTags>
+        <PackageOutputPath>..\nupkgs\</PackageOutputPath>
+        <PackageId>SlySoft.ClacksNet.Postgres</PackageId>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,4 +32,8 @@
       <ProjectReference Include="..\ClacksNet\ClacksNet.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="LICENSE" Pack="true" PackagePath="" />
+        <None Include="README.md" Pack="true" PackagePath="" />
+    </ItemGroup>
 </Project>

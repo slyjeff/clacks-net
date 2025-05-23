@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using SlySoft.ClacksNet;
 
-namespace ClacksNet.postgres;
+namespace SlySoft.ClacksNet.Postgres;
 
 internal sealed class PostgresClacksOutListener(ILogger<PostgresClacksOutListener> logger) : IClacksOutListener {
     private CancellationTokenSource? _cancellationTokenSource;

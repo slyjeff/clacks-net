@@ -1,3 +1,6 @@
+#NUGET packages
+nupkgs/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
