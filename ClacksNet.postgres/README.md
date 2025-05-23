@@ -9,7 +9,7 @@ polling.
 
 ### Install the NuGet package
 ```bash 
-dotnet add package SlySoft.ClackNet.Postgres
+dotnet add package SlySoft.ClacksNet.Postgres
 ```
 
 ### Configure the Outbox via dependency injection
