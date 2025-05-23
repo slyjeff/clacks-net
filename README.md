@@ -9,13 +9,19 @@ Additionally, this is intended to support multiple databases; however, I am usin
 with postgres, so that's the only one I have tested/fleshed out. Again, if you would
 like to add this support, I would be happy to accept a PR.
 
+This library does not support a dead letter queue. It will retry messages infinitely, though it will 
+retry other messages first so the system doesn't get stuck retrying the same failed message.
+I intend to add a dead letter queue in the future (but would welcome if someone else wants to do this).
+
 ---
-## How to Use
+## Using Clacks.NET
 
-### Install the NuGet package
-
+### Install the NuGet package(s)
+The main package is `SlySoft.Clacks.NET`, which contains the core functionality. If you are using Postgres, you can
+also install the `SlySoft.Clacks.NET.Postgres` package, which contains the Postgres-specific functionality.
 ```bash 
 dotnet add package SlySoft.Clacks.NET
+dotnet add package SlySoft.Clacks.NET.Postgres
 ```
 
 ### Configure the Outbox via dependency injection
