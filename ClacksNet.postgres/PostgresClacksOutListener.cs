@@ -1,13 +1,12 @@
 ﻿using System.Data;
 using Microsoft.Extensions.Logging;
 using Npgsql;
-using SlySoft.ClacksNet;
 
 namespace SlySoft.ClacksNet.Postgres;
 
 internal sealed class PostgresClacksOutListener(ILogger<PostgresClacksOutListener> logger) : IClacksOutListener {
     private CancellationTokenSource? _cancellationTokenSource;
-    private NpgsqlConnection? _connection = null;
+    private NpgsqlConnection? _connection;
     private string _connectionString = null!;
     private Task? _listenerTask;
     
