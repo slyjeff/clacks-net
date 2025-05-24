@@ -25,7 +25,7 @@ dotnet add package SlySoft.ClacksNet.Postgres
 ```
 
 ### Configure the Outbox via dependency injection
-Call `AddClacksOut` in your `Startup.cs` or `Program.cs` file to register the outbox service. This method allows the
+Call `AddClacksOutbox` in your `Startup.cs` or `Program.cs` file to register the outbox service. This method allows the
 setup of some configuration values, and you MUST configure a lambda expression to create a connection. In the example
 below, IDbConnection is registered in the DI container, and the lambda expression returns it. You may resolve the
 connection however you like, but it must be configured for the outbox to work.
@@ -37,7 +37,7 @@ using SlySoft.ClacksNet;
 
 ...
 
-services.AddClacksOut(x => 
+services.AddClacksOutbox(x => 
 {
     x.GetConnection = services => services.GetRequiredService<IDbConnection>();
 });
@@ -45,20 +45,20 @@ services.AddClacksOut(x =>
 
 ### Sending messages to the outbox
 
-This will allow you to write to the outbox by injecting `IClacksOut` into your classes. You can call the `Send` method
+This will allow you to write to the outbox by injecting `IClacksOutbox` into your classes. You can call the `Insert` method
 with a topic and a message. These values will be available when the outbox is processed later on. Note that there is
-both a synchronous and asynchronous version of the `Send` method.
+both a synchronous and asynchronous version of the `Insert` method.
 
 ```csharp
 using SlySoft.ClacksNet;
 
-public class MyService(IClacksOut clacksOut)
+public class MyService(IClacksOutbox outbox)
 {
     public async Task DoSomething()
     {
         var subject = "messages.to-the-world";
         var message = "Hello, World!"
-        await clacksOut.SendAsync(subject, message);
+        await outbox.InsertAsync(subject, message);
     }
 }
 
@@ -66,16 +66,16 @@ public class MyService(IClacksOut clacksOut)
 
 ### Processing the outbox
 
-To process the outbox, you must provide an implementation of the `IClacksOutSender` interface. This interface contains
-one method, `SendAsync`, which is called when the outbox is processed (by default, polled once per minute, though this
+To process the outbox, you must provide an implementation of the `IOutboxMessageSender` interface. This interface contains
+one method, `SendMessage`, which is called when the outbox is processed (by default, polled once per minute, though this
 value is configurable). You must return true if the message was sent successfully. Note that `message` contains a unique
 ID, which you should use to perform idempotency checks.
 
 ```csharp
 using SlySoft.ClacksNet;
 
-internal sealed class OutboxSender : IClacksOutSender {
-    public Task<bool> SendMessage(ClacksOutMessage message, CancellationToken cancellationToken = default) {
+internal sealed class OutboxSender : IOutboxMessageSender {
+    public Task<bool> SendMessage(OutboxMessage message, CancellationToken cancellationToken = default) {
         Console.WriteLine($"Sending message: {message.Topic} - {message.Message}");
         return Task.FromResult(true);
     }
@@ -83,14 +83,14 @@ internal sealed class OutboxSender : IClacksOutSender {
 ```
 
 You do not need to register this class with the DI container, but you DO need to provide it as a configuration value
-when calling `AddClacksOut`. See the following example:
+when calling `AddClacksOutbox`. See the following example:
 
 ```csharp
 using SlySoft.ClacksNet;
 
 ...
 
-services.AddClacksOut(x => 
+services.AddClacksOutbox(x => 
 {
     x.GetConnection = services => services.GetRequiredService<IDbConnection>();
     x.Sender = typeof(OutboxSender);
@@ -99,15 +99,15 @@ services.AddClacksOut(x =>
 ```
 
 Additionally, if you are using Postgres, you can add a reference to the `SlySoft.ClacksNet.Postgres` package, and add
-the `AddPostgresClacksOutListener` method to your DI container. This will create a listener for the outbox table that
+the `EnablePostgresOutboxTrigger` method to your DI container. This will create a listener for the outbox table that
 triggers on inserts. This will augment the polling and allow for more immediate processing of messages.
 
 ```csharp
-services.AddClacksOut(x => 
+services.AddClacksOutbox(x => 
 {
     x.GetConnection = services => services.GetRequiredService<IDbConnection>();
     x.Sender = typeof(OutboxSender);
     x.PollingInterval = TimeSpan.FromSeconds(10);
 })
-.AddPostgresClacksOutListener();
+.EnablePostgresOutboxTrigger();
 ```

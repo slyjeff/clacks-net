@@ -13,14 +13,14 @@ dotnet add package SlySoft.ClacksNet.Postgres
 ```
 
 ### Configure the Outbox via dependency injection
-Add a call to `AddPostgresClacksOutListener` in your `Startup.cs` or `Program.cs` file to register the outbox service.
+Add a call to `EnablePostgresOutboxTrigger` in your `Startup.cs` or `Program.cs` file to register the outbox service.
 
 ```csharp
-services.AddClacksOut(x => 
+services.AddClacksOutbox(x => 
 {
     x.GetConnection = services => services.GetRequiredService<IDbConnection>();
     x.Sender = typeof(OutboxSender);
     x.PollingInterval = TimeSpan.FromSeconds(10);
 })
-.AddPostgresClacksOutListener();
+.EnablePostgresOutboxTrigger();
 ```

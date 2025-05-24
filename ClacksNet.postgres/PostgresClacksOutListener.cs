@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace SlySoft.ClacksNet.Postgres;
 
-internal sealed class PostgresClacksOutListener(ILogger<PostgresClacksOutListener> logger) : IClacksOutListener {
+internal sealed class PostgresOutboxListener(ILogger<PostgresOutboxListener> logger) : IOutboxListener {
     private CancellationTokenSource? _cancellationTokenSource;
     private NpgsqlConnection? _connection;
     private string _connectionString = null!;
@@ -22,7 +22,7 @@ internal sealed class PostgresClacksOutListener(ILogger<PostgresClacksOutListene
         _connectionString = npgsqlConnection.ConnectionString;
 
         await OpenConnection();
-        logger.LogInformation("Listening for notifications on 'clacks_out_channel'...");
+        logger.LogInformation("Listening for notifications on 'clacks_outbox_channel'...");
         
         // Start the background task that waits for notifications
         _listenerTask = Task.Run(async () => {
@@ -59,9 +59,9 @@ internal sealed class PostgresClacksOutListener(ILogger<PostgresClacksOutListene
     }
     
     private void OnNotification(object sender, NpgsqlNotificationEventArgs e) {
-        logger.LogInformation("Received notification on channel '{EChannel}'. Payload: '{EPayload}'.", e.Channel, e.Payload);
+        logger.LogInformation("Received notification on channel '{Channel}'. Payload: '{Payload}'.", e.Channel, e.Payload);
         // The WaitAsync call in the listener task will wake up and trigger ProcessOutboxMessagesAsync.
-        // We don't need to explicitly call ProcessOutboxMessagesAsync here to avoid potential race conditions
+        // We don't need to explicitly process messages to avoid potential race conditions
         // if the notification arrives *before* the transaction is fully committed and visible to the
         // querying connection. WaitAsync ensures the listener loop resumes and then queries.
     }
@@ -99,7 +99,7 @@ internal sealed class PostgresClacksOutListener(ILogger<PostgresClacksOutListene
         _connection.Notification += OnNotification;
         await _connection.OpenAsync(_cancellationTokenSource.Token);
 
-        await using (var cmd = new NpgsqlCommand("LISTEN clacks_out_channel", _connection)) {
+        await using (var cmd = new NpgsqlCommand("LISTEN clacks_outbox_channel", _connection)) {
             await cmd.ExecuteNonQueryAsync(_cancellationTokenSource.Token);
         }
     }

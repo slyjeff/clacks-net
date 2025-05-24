@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace SlySoft.ClacksNet.Postgres;
 
 public static class Register {
-    public static IServiceCollection AddPostgresClacksOutListener(this IServiceCollection services) {
-        return services.AddTransient<IClacksOutListener, PostgresClacksOutListener>();
+    public static IServiceCollection EnablePostgresOutboxTrigger(this IServiceCollection services) {
+        return services.AddTransient<IOutboxListener, PostgresOutboxListener>();
     }
 }

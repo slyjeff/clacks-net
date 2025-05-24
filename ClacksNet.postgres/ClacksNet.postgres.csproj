@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>SlySoft.ClacksNet.Postgres</AssemblyName>
         <RootNamespace>SlySoft.ClacksNet.Postgres</RootNamespace>
-        <Version>1.0.0-beta</Version>
+        <Version>1.0.2-beta</Version>
         <Authors>Jeff Sylvester </Authors>
         <Description>An extension library for Clacks.NET that adds Postgres event monitoring for outbox processing</Description>
         <Copyright>Copyright (c) 2025 Jeff Sylvester</Copyright>

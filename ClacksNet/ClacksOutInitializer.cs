@@ -10,14 +10,14 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
             var connection = connectionProvider.GetConnection(services);
             await connection.OpenAsync(cancellationToken);
 
-            if (connection.TableExists("clacks_out")) {
+            if (connection.TableExists("clacks_outbox")) {
                 return;
             }
 
             CreateOutbox(connection);
-            logger.LogInformation("Created clacks_out table. Send the message on!");
+            logger.LogInformation("Created clacks_outbox table. Send the message on!");
         } catch (Exception e) {
-            logger.LogError(e, "Failed to create clacks_out table");
+            logger.LogError(e, "Failed to create clacks_outbox table");
         }
     }
 
@@ -50,7 +50,7 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreateOutboxSqlPostgres =
         """
-        CREATE TABLE clacks_out (
+        CREATE TABLE clacks_outbox (
             id             UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
             topic          TEXT      NOT NULL,
             message        TEXT      NOT NULL,
@@ -63,10 +63,10 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreatePostgresNotification =
         """
-        CREATE FUNCTION notify_new_clacks_out_message()
+        CREATE FUNCTION notify_new_clacks_outbox_message()
         RETURNS TRIGGER AS $$
         BEGIN
-            PERFORM pg_notify('clacks_out_channel', NEW.Id::text);
+            PERFORM pg_notify('clacks_outbox_channel', NEW.Id::text);
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql
@@ -74,15 +74,15 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreatePostgresInsertTrigger =
         """
-        CREATE TRIGGER clacks_out_message_insert_trigger
-        AFTER INSERT ON clacks_out
+        CREATE TRIGGER clacks_outbox_message_insert_trigger
+        AFTER INSERT ON clacks_outbox
         FOR EACH ROW
-        EXECUTE FUNCTION notify_new_clacks_out_message();
+        EXECUTE FUNCTION notify_new_clacks_outbox_message();
         """;
 
     private const string CreateOutboxSqlSqlServer =
         """
-        CREATE TABLE clacks_out (
+        CREATE TABLE clacks_outbox (
             id             UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID(),
             topic          NVARCHAR(MAX)    NOT NULL,
             message        NVARCHAR(MAX)    NOT NULL,
@@ -95,7 +95,7 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreateOutboxSqlMySql =
         """
-        CREATE TABLE clacks_out (
+        CREATE TABLE clacks_outbox (
             id             CHAR(36)     PRIMARY KEY DEFAULT (UUID()),
             topic          TEXT         NOT NULL,
             message        TEXT         NOT NULL,
@@ -108,7 +108,7 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreateOutboxSqlSqlite =
         """
-        CREATE TABLE clacks_out (
+        CREATE TABLE clacks_outbox (
             id             TEXT         PRIMARY KEY DEFAULT (lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)),2) || '-' || substr('89ab',abs(random()) % 4 + 1,1) || substr(hex(randomblob(2)),2) || '-' || hex(randomblob(6)))),
             topic          TEXT         NOT NULL,
             message        TEXT         NOT NULL,
@@ -121,7 +121,7 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreateOutboxSqlOracle =
         """
-        CREATE TABLE clacks_out (
+        CREATE TABLE clacks_outbox (
             id             RAW(16)      DEFAULT SYS_GUID() PRIMARY KEY,
             topic          CLOB         NOT NULL,
             message        CLOB         NOT NULL,
@@ -134,7 +134,7 @@ internal sealed class ClacksOutInitializer(IServiceProvider services, DbConnecti
 
     private const string CreateOutboxSqlDb2 =
         """
-        CREATE TABLE clacks_out (
+        CREATE TABLE clacks_outbox (
             id             CHAR(36)     PRIMARY KEY DEFAULT SYS_GUID(),
             topic          CLOB         NOT NULL,
             message        CLOB         NOT NULL,

@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <RootNamespace>SlySoft.ClacksNet</RootNamespace>
         <AssemblyName>SlySoft.ClacksNet</AssemblyName>
-        <Version>1.0.0-beta</Version>
+        <Version>1.0.2-beta</Version>
         <Authors>Jeff Sylvester </Authors>
         <Description>A .net outbox library</Description>
         <Copyright>Copyright (c) 2025 Jeff Sylvester</Copyright>

@@ -5,28 +5,28 @@ using Microsoft.Extensions.Logging;
 
 namespace SlySoft.ClacksNet;
 
-public interface IClacksOutListener : IAsyncDisposable {
+public interface IOutboxListener : IAsyncDisposable {
     Task Register(IDbConnection connection, Func<CancellationToken, Task> processClacksOutMessages, CancellationToken cancellationToken);
 }
 
-public sealed record ClacksOutMessage(Guid Id, string Topic, string Message) { }
+public sealed record OutboxMessage(Guid Id, string Topic, string Message) { }
 
-public interface IClacksOutSender {
-    Task<bool> SendMessage(ClacksOutMessage message, CancellationToken cancellationToken = default);    
+public interface IOutboxMessageSender {
+    Task<bool> SendMessage(OutboxMessage message, CancellationToken cancellationToken = default);    
 }
 
-internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnectionProvider connectionProvider, ILogger<ClacksOutProcessor> logger, ClacksOutConfig config) : IHostedService, IAsyncDisposable {
+internal sealed class OutboxProcessor(IServiceProvider services, DbConnectionProvider connectionProvider, ILogger<OutboxProcessor> logger, ClacksOutboxConfig config) : IHostedService, IAsyncDisposable {
     private CancellationTokenSource? _cancellationTokenSource;
     private CancellationToken _cancellationToken = CancellationToken.None;
-    private IClacksOutSender _sender = null!;
-    private List<IClacksOutListener> _listeners = [];
+    private IOutboxMessageSender _sender = null!;
+    private List<IOutboxListener> _listeners = [];
     private System.Timers.Timer? _pollingTimer;
     private readonly TimeSpan _pollingInterval = config.PollingInterval;
 
     public async Task StartAsync(CancellationToken cancellationToken) {
-        var sender = services.GetService<IClacksOutSender>();
+        var sender = services.GetService<IOutboxMessageSender>();
         if (sender == null) {
-            logger.LogInformation("IClacksOutSender not registered. ClacksOut Processor will not start.");
+            logger.LogInformation("IOutboxListener not registered. OutboxProcessor will not start.");
             return;
         }
         _sender = sender;
@@ -36,7 +36,7 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
 
         try {
             // grab any messages that need to be processed on startup
-            await ProcessClacksOutMessages(cancellationToken);
+            await ProcessOutboxMessages(cancellationToken);
             logger.LogInformation("Completed initial outbox scan on startup.");
 
             await RegisterListeners();
@@ -49,11 +49,11 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
     }
 
     private async Task RegisterListeners() {
-        _listeners = services.GetServices<IClacksOutListener>().ToList();
+        _listeners = services.GetServices<IOutboxListener>().ToList();
         if (_listeners.Count > 0) {
             using var connection = connectionProvider.GetConnection(services);
             foreach (var listener in _listeners) {
-                await listener.Register(connection, ProcessClacksOutMessages, _cancellationToken);
+                await listener.Register(connection, ProcessOutboxMessages, _cancellationToken);
             }
         }        
     }
@@ -71,19 +71,19 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
             return;
         }
 
-        logger.LogInformation("Polling for clacks out messages.");
-        await ProcessClacksOutMessages(cancellationToken);
+        logger.LogInformation("Polling for outbox messages.");
+        await ProcessOutboxMessages(cancellationToken);
     }
 
-    private async Task ProcessClacksOutMessages(CancellationToken cancellationToken) {
-        logger.LogInformation("Processing clacks out messages...");
+    private async Task ProcessOutboxMessages(CancellationToken cancellationToken) {
+        logger.LogInformation("Scanning for outbox messages...");
         using var connection = connectionProvider.GetConnection(services);
         await connection.OpenAsync(cancellationToken);
 
         while (true) {
             var message = await GetNextMessage(connection, cancellationToken);
             if (message == null) {
-                logger.LogInformation("Finished processing outbox messages batch.");
+                logger.LogInformation("Finished processing outbox messages.");
                 return;
             }
             
@@ -103,7 +103,7 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
         }
     }
 
-    private async Task<ClacksOutMessage?> GetNextMessage(IDbConnection connection, CancellationToken cancellationToken) {
+    private async Task<OutboxMessage?> GetNextMessage(IDbConnection connection, CancellationToken cancellationToken) {
         try {
             using var transaction = connection.BeginTransaction();
 
@@ -126,14 +126,14 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
     private const string SelectNextMessageSql = 
         """
         SELECT id, topic, message, created_at, next_send_time, send_count
-          FROM clacks_out 
+          FROM clacks_outbox 
          WHERE (next_send_time <= @CurrentTime OR next_send_time IS NULL)
            AND sent_at is null
          ORDER BY next_send_time
          LIMIT 1
         """;
 
-    private async Task<ClacksOutMessage?> SelectNextMessage(IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default) {
+    private static async Task<OutboxMessage?> SelectNextMessage(IDbConnection connection, IDbTransaction transaction, CancellationToken cancellationToken = default) {
         using var command = connection.CreateCommand();
 
         var currentTimeParam = command.CreateParameter();
@@ -150,12 +150,12 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
             return null;
         }
 
-        return new ClacksOutMessage(reader.GetGuid(0), reader.GetString(1), reader.GetString(2));
+        return new OutboxMessage(reader.GetGuid(0), reader.GetString(1), reader.GetString(2));
     } 
     
     private const string UpdateMessageSendCountSql = 
         """
-        UPDATE clacks_out 
+        UPDATE clacks_outbox 
          SET send_count = send_count + 1, 
              next_send_time = @NextSendTime
         WHERE ID=@ID
@@ -181,12 +181,12 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
 
     private const string UpdateMessageSentSql = 
         """
-        UPDATE clacks_out 
+        UPDATE clacks_outbox 
           SET sent_at = @SentAt 
         WHERE ID=@ID
         """;    
 
-    private static async Task UpdateMessageSent(IDbConnection connection, ClacksOutMessage message, CancellationToken cancellationToken = default) {
+    private static async Task UpdateMessageSent(IDbConnection connection, OutboxMessage message, CancellationToken cancellationToken = default) {
         using var command = connection.CreateCommand();
         command.CommandText = UpdateMessageSentSql;
 
@@ -204,7 +204,7 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
     }    
     
     public async Task StopAsync(CancellationToken cancellationToken)  {
-        logger.LogInformation("ClacksOut Processor Service stopping...");
+        logger.LogInformation("Outbox Processor stopping...");
         _pollingTimer?.Stop();
 
         if (_cancellationTokenSource != null) {
@@ -212,7 +212,7 @@ internal sealed class ClacksOutProcessor(IServiceProvider services, DbConnection
         }
         
         await DisposeAsync();
-        logger.LogInformation("ClacksOut Processor Service stopped.");
+        logger.LogInformation("Outbox Processor stopped.");
     }
 
     public async ValueTask DisposeAsync() {

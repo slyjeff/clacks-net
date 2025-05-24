@@ -3,13 +3,13 @@ using System.Text.Json;
 
 namespace SlySoft.ClacksNet;
 
-public interface IClacksOut {
-    Task SendAsync(string topic, object message, CancellationToken cancellationToken = default);
-    void Send(string topic, object message);
+public interface IOutbox {
+    Task InsertAsync(string topic, object message, CancellationToken cancellationToken = default);
+    void Insert(string topic, object message);
 }
 
-internal sealed class ClacksOut(IServiceProvider services, DbConnectionProvider connectionProvider) : IClacksOut {
-    public async Task SendAsync(string topic, object message, CancellationToken cancellationToken = default) {
+internal sealed class Outbox(IServiceProvider services, DbConnectionProvider connectionProvider) : IOutbox {
+    public async Task InsertAsync(string topic, object message, CancellationToken cancellationToken = default) {
         using var connection = connectionProvider.GetConnection(services);
         await connection.OpenAsync(cancellationToken);
 
@@ -17,7 +17,7 @@ internal sealed class ClacksOut(IServiceProvider services, DbConnectionProvider 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public void Send(string topic, object message) {
+    public void Insert(string topic, object message) {
         using var connection = connectionProvider.GetConnection(services);
         connection.Open();
         
@@ -27,7 +27,7 @@ internal sealed class ClacksOut(IServiceProvider services, DbConnectionProvider 
     
     private const string InsertSql = 
         """
-         INSERT INTO clacks_out (topic, message)
+         INSERT INTO clacks_outbox (topic, message)
          VALUES (@topic, @message)
         """;
 
